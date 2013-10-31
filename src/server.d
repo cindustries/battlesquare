@@ -32,13 +32,40 @@ private class ClientState {
     int routerId;
 }
 
-class Server : TickerApplication {
+final class Server : ServerEventPumper, TickerApplication {
+    
+    private ulong ticknum;
+    ClientState[int] clients;
+    
+    public bool onTick() {
+        this.pumpEvents();
+        return true;
+    }
+    
+    override void onHello(int from, Hello msg) {
+        clients[from] = new ClientState(msg.clientId);
+        clients[from].state = ClientState.State.WaitingForUpdates;
+    }
+    
+    override void onClientStateUpdate(int from, ClientStateUpdate msg) {
+        ClientState client = clients[from];
+        client.state = ClientState.State.GettingUpdates;
+        
+        client.tick = msg.tick;
+        client.x = msg.x;
+        client.y = msg.y;
+    }
+    
+    override void onGoodbye(int from, Goodbye msg) {
+        clients.remove(from);
+    }
+    
+}
+
+abstract class ServerEventPumper {
     
     Context zmq;
     Router socket;
-    private ulong ticknum;
-    
-    ClientState[int] clients;
     
     public this() {
         zmq = new Context;
@@ -46,12 +73,7 @@ class Server : TickerApplication {
         socket.bind(BIND_URL);
     }
     
-    public bool onTick() {
-        writeln("A tick! " ~ to!string(ticknum++));
-        return (ticknum < 10);
-    }
-    
-    private void pumpEvents() {
+    protected void pumpEvents() {
         // check if we have any messages
         while(socket.canPollIn) {
             auto id = socket.recv!int();
@@ -66,23 +88,10 @@ class Server : TickerApplication {
         }
     }
     
-    private void onHello(int from, Hello msg) {
-        clients[from] = new ClientState(msg.clientId);
-        clients[from].state = ClientState.State.WaitingForUpdates;
-    }
+    abstract protected void onHello(int from, Hello msg);
+    abstract protected void onClientStateUpdate(int from, ClientStateUpdate msg);
+    abstract protected void onGoodbye(int from, Goodbye msg);
     
-    private void onClientStateUpdate(int from, ClientStateUpdate msg) {
-        ClientState client = clients[from];
-        client.state = ClientState.State.GettingUpdates;
-        
-        client.tick = msg.tick;
-        client.x = msg.x;
-        client.y = msg.y;
-    }
-    
-    private void onGoodbye(int from, Goodbye msg) {
-        clients.remove(from);
-    }
     
     public void destroy() {
         socket.close();
