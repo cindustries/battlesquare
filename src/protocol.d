@@ -2,34 +2,35 @@
 module protocol;
 
 import std.uuid;
+public import std.uuid : UUID;
 import msgpack;
 
 enum MessageClassClient { // messages that the client sends
-    MCHello,
-    MCClientStateUpdate,
-    MCGoodbye
+    Hello,
+    ClientStateUpdate,
+    Goodbye
 }
     
 enum MessageClassServer { // messages that the server sends
-    MCHelloReply,
-    MCServerStateUpdate
+    HelloReply,
+    ServerStateUpdate
 }
 
 // Client to Server
-struct Hello { UUID clientId; }
+struct MHello { UUID clientId; }
 
-struct ClientStateUpdate {
+struct MClientStateUpdate {
     ulong tick;
     float x, y;
 }
 
-struct Goodbye { UUID clientId; }
+struct MGoodbye { UUID clientId; }
 
 
 // Server to Client
-struct HelloReply { ulong tick; }
+struct MHelloReply { ulong tick; }
 
-struct ServerStateUpdate {
+struct MServerStateUpdate {
     struct Client {
         float x, y;
         int diff;

@@ -32,22 +32,30 @@ private class ClientState {
     int routerId;
 }
 
+// TODO : move to a proper event/message system
 final class Server : ServerEventPumper, TickerApplication {
     
-    private ulong ticknum;
+    private ulong tick;
     ClientState[int] clients;
     
     public bool onTick() {
         this.pumpEvents();
-        return true;
+        tick++;
+        writeln("Tick - " ~ to!string(tick));
+        
+        MServerStateUpdate state;
+        foreach(int client; clients.keys)
+            this.send(client, state);
+        
+        return (tick < 10);
     }
     
-    override void onHello(int from, Hello msg) {
+    override void onHello(int from, MHello msg) {
         clients[from] = new ClientState(msg.clientId);
         clients[from].state = ClientState.State.WaitingForUpdates;
     }
     
-    override void onClientStateUpdate(int from, ClientStateUpdate msg) {
+    override void onClientStateUpdate(int from, MClientStateUpdate msg) {
         ClientState client = clients[from];
         client.state = ClientState.State.GettingUpdates;
         
@@ -56,14 +64,14 @@ final class Server : ServerEventPumper, TickerApplication {
         client.y = msg.y;
     }
     
-    override void onGoodbye(int from, Goodbye msg) {
+    override void onGoodbye(int from, MGoodbye msg) {
         clients.remove(from);
     }
     
 }
 
 abstract class ServerEventPumper {
-    
+        
     Context zmq;
     Router socket;
     
@@ -73,7 +81,19 @@ abstract class ServerEventPumper {
         socket.bind(BIND_URL);
     }
     
+    import std.traits : hasMember;
+    import std.string : chompPrefix;
+    protected void send(T)(int to, T message) 
+    if (is(T == struct)) {        
+        MessageClassServer msgclass = mixin("MessageClassServer." ~ chompPrefix(T.stringof, "M"));
+        socket.sendMore(to);
+        socket.sendEmpty();
+        socket.sendMore(msgclass);
+        socket.send(message);
+    }
+    
     protected void pumpEvents() {
+        
         // check if we have any messages
         while(socket.canPollIn) {
             auto id = socket.recv!int();
@@ -81,17 +101,17 @@ abstract class ServerEventPumper {
             auto msgclass = socket.recv!MessageClassClient();
             
             final switch(msgclass) {
-                case MessageClassClient.MCHello:                onHello(id, socket.recv!Hello()); break;
-                case MessageClassClient.MCClientStateUpdate:    onClientStateUpdate(id, socket.recv!ClientStateUpdate()); break;
-                case MessageClassClient.MCGoodbye:              onGoodbye(id, socket.recv!Goodbye()); break;
+                foreach(string mem; __traits(allMembers, MessageClassClient)) {
+                    assert(__traits(hasMember, ServerEventPumper, mem));
+                    mixin("case MessageClassClient." ~ mem ~ ": on" ~ mem ~ "(id, socket.recv!(M" ~ mem ~ ")()); break;");
+                }
             }
         }
     }
     
-    abstract protected void onHello(int from, Hello msg);
-    abstract protected void onClientStateUpdate(int from, ClientStateUpdate msg);
-    abstract protected void onGoodbye(int from, Goodbye msg);
     
+    // horray for macros
+    mixin(EventMethodGenerator!MessageClassClient);    
     
     public void destroy() {
         socket.close();
@@ -100,8 +120,21 @@ abstract class ServerEventPumper {
     
 }
 
-void main() {
+private template EventMethodGenerator(alias mcenum) if(is(mcenum == enum)) {
     
+    string genAllDefs(members...)() {
+        string all = "";
+        foreach(string mname; members) {
+            all = all ~ "abstract protected void on" ~ mname ~ "(int from, M" ~ mname ~ " msg); ";
+        }
+        return all;
+    }
+    
+    enum string EventMethodGenerator = genAllDefs!(__traits(allMembers, mcenum))();
+}
+
+void main() {
+        
     auto server = new Server;
     scope(exit) server.destroy();
     

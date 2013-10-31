@@ -50,7 +50,8 @@ def build(bld):
     
     bld.stlib(
         source='/import/deimos/ev.d',
-        target='evd'
+        target='evd',
+        lib='ev'
     )
     
     bld.program(
@@ -66,9 +67,13 @@ def build(bld):
     )
     
     bld.program(
-        source='src/client.d',
+        source=[
+            'src/client.d',
+            'src/ticker.d',
+            'src/protocol.d'
+        ],
         target='client',
-        use=['DerelictSDL2', 'zmqd', 'msgpackd'],
-        includes=['./src','./import'], lib=['zmq'],
+        use=['evd', 'DerelictSDL2', 'zmqd', 'msgpackd'],
+        includes=['./src','./import'], lib=['zmq', 'ev'],
         dflags=['-g']
     )

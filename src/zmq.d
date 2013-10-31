@@ -97,7 +97,7 @@ public class Context {
         }
         
         private void sendGeneric(T, int flags)(T what) if (!is(T == ubyte[])) {
-            return sendGeneric(msgpack.pack(what));            
+            return sendGeneric!(ubyte[], flags)(msgpack.pack(what));            
         }
         
         // Some options of the socket - TODO implement more/setting options
