@@ -24,7 +24,6 @@ public class Context {
             s.close();
         
         zmq_ctx_destroy(context);
-        // FIXME : closing a socket causes a segfault?
     }
     
     public Router createRouter() {
