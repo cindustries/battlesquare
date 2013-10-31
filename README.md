@@ -8,11 +8,11 @@ How to Compile
 
 Simple:
 
-<code>./waf configure
-./waf build</code>
+<pre><code>./waf configure
+./waf build</code></pre>
 
 or on windows (you'll probably have to install python):
 
-<code>python waf configure
-python waf build</code>
+<pre><code>python waf configure
+python waf build</code></pre>
 
