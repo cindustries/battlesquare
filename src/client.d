@@ -48,6 +48,7 @@ class Client {
             //send a hello request
             MHello helloreq = { this.globalId };
             event.sendToServer(helloreq);
+            state = State.WaitingForHelloReply;
             
         } else if(state == State.WaitingForHelloReply) {
             // do we need to do something here?
@@ -76,7 +77,7 @@ class Client {
     }
     
     @event void gotHelloReply(MHelloReply msg) {
-        
+        state = State.Normal;
     }
     
     @event void gotServerStateUpdate(MServerStateUpdate msg) {
