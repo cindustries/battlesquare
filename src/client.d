@@ -34,6 +34,7 @@ class Client {
     
     State state;
     ulong tick;
+    float x, y, rot;
     
     @event void onTick() {
         tick++;

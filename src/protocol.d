@@ -20,7 +20,7 @@ struct MHelloReply { ulong tick; }
 
 struct MServerStateUpdate {
     struct Client {
-        float x, y;
+        float x, y, rot;
         int diff;
     }
     
@@ -34,7 +34,7 @@ struct MHello { UUID clientId; }
 
 struct MClientStateUpdate {
     ulong tick;
-    float x, y;
+    float x, y, rot;
 }
 
 struct MGoodbye { UUID clientId; }
