@@ -47,7 +47,7 @@ class Client {
         if(state == State.Initialised) {
             //send a hello request
             MHello helloreq = { this.globalId };
-            event.send(helloreq);
+            event.sendToServer(helloreq);
             
         } else if(state == State.WaitingForHelloReply) {
             // do we need to do something here?
@@ -60,12 +60,12 @@ class Client {
             state.x = 351;
             state.y = 359;
             state.tick = this.tick;
-            event.send(state);
+            event.sendToServer(state);
             
             
         } else if(state == State.Exiting) {
             MGoodbye goodbye = { this.globalId };
-            event.send(goodbye);
+            event.sendToServer(goodbye);
             
         }
         

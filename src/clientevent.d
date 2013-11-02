@@ -40,7 +40,7 @@ class ClientEventManager : EventManager {
     
     import std.traits : hasMember;
     import std.string : chompPrefix;
-    protected void send(T)(T message) 
+    protected void sendToServer(T)(T message) 
     if (is(T == struct)) {        
         MessageClassServer msgclass = mixin("MessageClassServer." ~ chompPrefix(T.stringof,"M"));
         socket.sendMore(msgclass);
