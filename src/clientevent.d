@@ -35,6 +35,7 @@ class ClientEventManager : EventManager {
     }
     
     public void run(double tickrate) {
+        this.register("exit", (){ doExit = true; }); // allow us to actually leave the loop
         tickerapp.runTicker(tickrate);
     }
     
