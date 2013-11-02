@@ -56,22 +56,11 @@ def build(bld):
     
     bld.program(
         source=[
-            'src/server.d',
-            'src/ticker.d',
-            'src/protocol.d'
-        ],
-        target='server',
-        use=['evd', 'DerelictSDL2', 'zmqd', 'msgpackd'],
-        includes=['./src','./import'], lib=['zmq', 'ev'],
-        dflags=['-g']
-    )
-    
-    bld.program(
-        source=[
             'src/client.d',
             'src/ticker.d',
             'src/protocol.d',
-            'src/event.d'
+            'src/event.d',
+            'src/clientevent.d'
         ],
         target='client',
         use=['evd', 'DerelictSDL2', 'zmqd', 'msgpackd'],
