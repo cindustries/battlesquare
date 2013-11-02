@@ -6,6 +6,11 @@ import clientevent;
 import protocol;
 import std.uuid;
 
+// represents our knowledge of the other players
+struct Player {
+    float x, y, rot;
+}
+
 class Client {
     
     ClientEventManager event;
