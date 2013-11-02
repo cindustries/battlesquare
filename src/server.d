@@ -47,7 +47,7 @@ final class Server : ServerEventPumper, TickerApplication {
         foreach(int client; clients.keys)
             this.send(client, state);
         
-        return (tick < 10);
+        return (tick < 10000);
     }
     
     override void onHello(int from, MHello msg) {

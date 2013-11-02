@@ -70,7 +70,8 @@ def build(bld):
         source=[
             'src/client.d',
             'src/ticker.d',
-            'src/protocol.d'
+            'src/protocol.d',
+            'src/event.d'
         ],
         target='client',
         use=['evd', 'DerelictSDL2', 'zmqd', 'msgpackd'],
