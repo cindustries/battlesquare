@@ -5,6 +5,8 @@ import zmq;
 import clientevent;
 import protocol;
 import std.uuid;
+import std.conv : to;
+import std.stdio;
 
 // represents our knowledge of the other players
 struct Player {
@@ -38,11 +40,11 @@ class Client {
     UUID globalId;
     
     State state;
-    ulong tick;
+    ulong serverTick;   // updated when we get a tick-stamped state update
     float x, y, rot;
     
-    @event void onTick() {
-        tick++;
+    @event void onTick(ulong tick) {
+        writeln("Tick " ~ to!string(tick));
         
         if(state == State.Initialised) {
             //send a hello request
@@ -60,7 +62,7 @@ class Client {
             
             state.x = 351;
             state.y = 359;
-            state.tick = this.tick;
+            state.tick = this.serverTick;
             event.sendToServer(state);
             
             
@@ -81,7 +83,7 @@ class Client {
     }
     
     @event void gotServerStateUpdate(MServerStateUpdate msg) {
-        this.tick = msg.tick;
+        serverTick = msg.tick;
     }
     
     public void destroy() {

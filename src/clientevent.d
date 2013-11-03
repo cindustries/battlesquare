@@ -19,9 +19,9 @@ class ClientEventManager : EventManager {
     bool doExit = false;
     
     private class Ticker : TickerApplication {
-        bool onTick() {
+        bool onTick(ulong tick) {
             pumpEvents();
-            invoke("onTick");
+            invoke("onTick", tick);
             return (!doExit);
         }
     }
