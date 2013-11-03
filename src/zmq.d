@@ -24,6 +24,7 @@ public class Context {
             s.close();
         
         zmq_ctx_destroy(context);
+        super.destroy();
     }
     
     public Router createRouter() {

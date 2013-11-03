@@ -75,5 +75,6 @@ class ClientMessenger {
     public void destroy() {
         socket.close();
         zmq.destroy();
+        super.destroy();
     }
 }

@@ -93,6 +93,7 @@ class Client {
     public void destroy() {
         message.destroy();
         event.destroy();        
+        super.destroy();
     }
 }
 
