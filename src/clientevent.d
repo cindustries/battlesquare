@@ -53,8 +53,8 @@ class ClientMessenger {
     import std.string : chompPrefix;
     protected void sendToServer(T)(T message) 
     if (is(T == struct)) {        
-        MessageClassServer msgclass = mixin("MessageClassServer." ~ chompPrefix(T.stringof,"M"));
-        socket.sendMore(msgclass);
+        //MessageClassServer msgclass = mixin("MessageClassServer." ~ chompPrefix(T.stringof,"M"));
+        //socket.sendMore(msgclass);
         socket.send(message);
     }
     
@@ -62,13 +62,14 @@ class ClientMessenger {
         
         // check if we have any messages
         while(socket.canPollIn) {
-            auto msgclass = socket.recv!MessageClassClient();
+            //auto msgclass = socket.recv!MessageClassClient();
             
-            final switch(msgclass) {
-                foreach(string mem; __traits(allMembers, MessageClassClient)) {
-                    mixin("case MessageClassClient." ~ mem ~ ": this.event.invoke(\"got" ~ mem ~ "\", socket.recv!(M" ~ mem ~ ")()); break;");
-                }
-            }
+            //final switch(msgclass) {
+            //    foreach(string mem; __traits(allMembers, MessageClassClient)) {
+            //        mixin("case MessageClassClient." ~ mem ~ ": this.event.invoke(\"got" ~ mem ~ "\", socket.recv!(M" ~ mem ~ ")()); break;");
+            //    }
+            //}
+            event.invoke("gotServerStateUpdate", socket.recv!(MServerStateUpdate)());
         }
     }
     

@@ -9,6 +9,8 @@ import std.stdio;
 import std.container;
 import std.exception;
 
+enum PACK_FIELD_NAMES = true;
+
 public class Context {
     
     private void* context;

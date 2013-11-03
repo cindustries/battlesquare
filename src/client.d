@@ -9,7 +9,7 @@ import std.conv : to;
 import std.stdio;
 
 // represents our knowledge of the other players
-struct Player {
+class Player {
     float x, y, rot;
 }
 
@@ -20,61 +20,34 @@ class Client {
     
     public void run() {
         event.register("onTick", &this.onTick);
-        event.register("gotHelloReply", &this.gotHelloReply);
         event.register("gotServerStateUpdate", &this.gotServerStateUpdate);
         event.run(0.01);
     }
     
-    enum State {
-        Invalid,
-        Initialised,
-        WaitingForHelloReply,
-        Normal,
-        Exiting
-    }
+    // possible states our client can be in
+    enum State { Invalid, Normal, Exiting }
     
     this() {
         event = new ClientEventManager;
         message = new ClientMessenger(event);
         
-        globalId = randomUUID(); // eventually this will be a PlayerID.net ID or something
-        state = State.Initialised;
+        state = State.Normal;
     }
-    
-    UUID globalId;
     
     State state;
     ulong serverTick;   // updated when we get a tick-stamped state update
-    float x, y, rot;
+    Player thisPlayer = new Player;
     
     @event void onTick(ulong tick) {
         writeln("Tick " ~ to!string(tick));
         
-        if(state == State.Initialised) {
-            //send a hello request
-            MHello helloreq = { this.globalId };
-            message.sendToServer(helloreq);
-            
-            state = State.WaitingForHelloReply;
-            
-        } else if(state == State.WaitingForHelloReply) {
-            // do we need to do something here?
-            // maybe retry after a while            
-            
-        } else if(state == State.Normal) {
-            // send a state update
-            MClientStateUpdate state;
-            
-            state.x = 351;
-            state.y = 359;
-            state.tick = this.serverTick;
-            message.sendToServer(state);
-            
-        } else if(state == State.Exiting) {
-            MGoodbye goodbye = { this.globalId };
-            message.sendToServer(goodbye);
-            
-        }
+        // send a state update
+        MClientStateUpdate stateUpdate;
+        
+        stateUpdate.x = thisPlayer.x;
+        stateUpdate.y = thisPlayer.y;
+        stateUpdate.tick = this.serverTick;
+        message.sendToServer(stateUpdate);
         
         
         if(state == State.Exiting) {
@@ -82,12 +55,9 @@ class Client {
         }
     }
     
-    @event void gotHelloReply(MHelloReply msg) {
-        state = State.Normal;
-    }
-    
     @event void gotServerStateUpdate(MServerStateUpdate msg) {
         serverTick = msg.tick;
+        // do something about the other clients
     }
     
     public void destroy() {
