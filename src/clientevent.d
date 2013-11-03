@@ -7,30 +7,20 @@ import protocol;
 
 enum string CONNECT_URL = "tcp://localhost:12345";
 
-// TODO seperate out ZMQ from the generic event system
-// ideally the ZMQ manager would be a seperate object to the EM altogether
-
 // TODO come up with a config system
 class ClientEventManager : EventManager {
         
-    Context zmq;
-    Dealer socket;
     TickerApplication tickerapp;
     bool doExit = false;
     
     private class Ticker : TickerApplication {
         bool onTick(ulong tick) {
-            pumpEvents();
             invoke("onTick", tick);
             return (!doExit);
         }
     }
     
     public this() {
-        zmq = new Context;
-        socket = zmq.createDealer();
-        socket.connect(CONNECT_URL);
-        
         tickerapp = new this.Ticker;
     }
     
@@ -39,7 +29,27 @@ class ClientEventManager : EventManager {
         tickerapp.runTicker(tickrate);
     }
     
-    import std.traits : hasMember;
+}
+
+class ClientMessenger {
+    
+    private EventManager event;
+    private Context zmq;
+    private Dealer socket;
+    
+    public this(EventManager eventManager) {
+        event = eventManager;
+        event.register("onTick", &this.onTick);
+        
+        zmq = new Context;
+        socket = zmq.createDealer();
+        socket.connect(CONNECT_URL);
+    }
+    
+    void onTick(ulong tick) {
+        this.pumpEvents();
+    }
+    
     import std.string : chompPrefix;
     protected void sendToServer(T)(T message) 
     if (is(T == struct)) {        
@@ -56,7 +66,7 @@ class ClientEventManager : EventManager {
             
             final switch(msgclass) {
                 foreach(string mem; __traits(allMembers, MessageClassClient)) {
-                    mixin("case MessageClassClient." ~ mem ~ ": this.invoke(\"got" ~ mem ~ "\", socket.recv!(M" ~ mem ~ ")()); break;");
+                    mixin("case MessageClassClient." ~ mem ~ ": this.event.invoke(\"got" ~ mem ~ "\", socket.recv!(M" ~ mem ~ ")()); break;");
                 }
             }
         }
@@ -66,5 +76,4 @@ class ClientEventManager : EventManager {
         socket.close();
         zmq.destroy();
     }
-    
 }

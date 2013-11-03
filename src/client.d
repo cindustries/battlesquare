@@ -16,6 +16,8 @@ struct Player {
 class Client {
     
     ClientEventManager event;
+    ClientMessenger message;
+    
     public void run() {
         event.register("onTick", &this.onTick);
         event.register("gotHelloReply", &this.gotHelloReply);
@@ -33,6 +35,8 @@ class Client {
     
     this() {
         event = new ClientEventManager;
+        message = new ClientMessenger(event);
+        
         globalId = randomUUID(); // eventually this will be a PlayerID.net ID or something
         state = State.Initialised;
     }
@@ -49,7 +53,8 @@ class Client {
         if(state == State.Initialised) {
             //send a hello request
             MHello helloreq = { this.globalId };
-            event.sendToServer(helloreq);
+            message.sendToServer(helloreq);
+            
             state = State.WaitingForHelloReply;
             
         } else if(state == State.WaitingForHelloReply) {
@@ -63,12 +68,11 @@ class Client {
             state.x = 351;
             state.y = 359;
             state.tick = this.serverTick;
-            event.sendToServer(state);
-            
+            message.sendToServer(state);
             
         } else if(state == State.Exiting) {
             MGoodbye goodbye = { this.globalId };
-            event.sendToServer(goodbye);
+            message.sendToServer(goodbye);
             
         }
         
@@ -87,7 +91,8 @@ class Client {
     }
     
     public void destroy() {
-        event.destroy();
+        message.destroy();
+        event.destroy();        
     }
 }
 

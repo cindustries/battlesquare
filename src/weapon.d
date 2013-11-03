@@ -15,7 +15,7 @@ class SimpleWeaponImpl : Weapon {
     float _fireDelay;
     int _cartridgeSize;
     
-    protected this(string name, bool isAutomatic, float fireDelay, float cartridgeSize) {
+    protected this(string name, bool isAutomatic, float fireDelay, int cartridgeSize) {
         _name = name;
         _isAutomatic = isAutomatic;
         _fireDelay = fireDelay;
