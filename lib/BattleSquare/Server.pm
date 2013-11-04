@@ -4,18 +4,12 @@ use Moo;
 use MooX::Options protect_argv => 0;
 
 use POE;
-use DDP;
-use ZMQ::Constants qw(
-  ZMQ_ROUTER
-  ZMQ_IDENTITY
-  ZMQ_SNDMORE
-);
-
-use POSIX qw( floor );
-use Time::HiRes qw( time gettimeofday tv_interval );
 use Log::Log4perl qw(:easy);
+use Data::UUID;
 
-with 'POEx::ZMQ3::Role::Emitter';
+use BattleSquare::Server::Info;
+use BattleSquare::Server::Game;
+use BattleSquare::Server::Player;
 
 option port => (
   is => 'ro',
@@ -73,12 +67,6 @@ option gridsize => (
   documentation => "Size of the gamefield (Default: 800x600)",
 );
 
-has players => (
-  is => 'ro',
-  lazy => 1,
-  default => sub {{}},
-);
-
 option tickrate => (
   is => 'ro',
   lazy => 1,
@@ -104,45 +92,59 @@ by conflict industries                 http://battlesquare.org/
 __EOF__
 };
 
-has tickdelay => (
+has data_uuid => (
   is => 'ro',
   lazy => 1,
-  default => sub { 1 / $_[0]->tickrate },
+  default => sub { Data::UUID->new },
 );
 
-has start_time => (
+has sessions => (
   is => 'ro',
   lazy => 1,
-  default => sub { time },
+  default => sub {{}},
 );
 
-sub current_tick {
-  my ( $self ) = @_;
-  my $diff = time - $self->start_time;
-  return floor( $diff / $self->tickdelay );
+sub login {
+  my ( $self, $username ) = @_;
+  return "server full" unless (scalar values %{$self->sessions}) <= $self->maxplayers;
+  return "username exist" if grep { $_->username eq $username } values %{$self->sessions};
+  my $player = BattleSquare::Server::Player->new(
+    username => $username,
+    connected => $self->game->current_tick,
+  );
+  my $uuid = $self->data_uuid->create_str;
+  $self->sessions->{$uuid} = $player;
+  return $uuid;
 }
 
-has listen_on => (
+sub logout {
+  my ( $self, $uuid ) = @_;
+  delete $self->sessions->{$uuid} if exists $self->sessions->{$uuid};
+  return "logout";
+}
+
+has info => (
   is => 'ro',
-  default => sub { 'tcp://'.$_[0]->ip.':'.$_[0]->port },
+  lazy => 1,
+  default => sub {
+    return BattleSquare::Server::Info->new(
+      server => $_[0],
+    );
+  },
 );
 
-sub build_defined_states {
-  my ($self) = @_;
-  [ $self => [qw/
-    emitter_started
-    zmqsock_bind_added
-    zmqsock_multipart_recv
-    zmqsock_created
-    zmqsock_closing
-    tick
-  /], ],
-}
+has game => (
+  is => 'ro',
+  lazy => 1,
+  default => sub {
+    return BattleSquare::Server::Game->new(
+      server => $_[0],
+    );
+  },
+);
 
 sub BUILD {
   my ( $self ) = @_;
-  $self->start;
-  $self->start_time;
   Log::Log4perl->easy_init(
     $self->trace
       ? $TRACE
@@ -150,52 +152,14 @@ sub BUILD {
         ? $DEBUG
         : $INFO
   );
+  DEBUG("Server BUILD");
+  $self->info->start;
+  $self->game->start;
 }
 
-sub zmqsock_bind_added { INFO("Listening to ".$_[ARG1]) }
-sub zmqsock_created { DEBUG("Created socket type ".$_[ARG1]) }
-sub zmqsock_closing { DEBUG("[".$_[ARG0]."] closing") }
-
-sub zmqsock_multipart_recv {
-  my ( $from, $envelope, $data ) = @{$_[ARG1]};
-  if ($data eq 'needtick') {
-    TRACE("need tick");
-  } else {
-    my $diff = $_[0]->current_tick - $data;
-    TRACE("have diff: ".sprintf("%10d",$diff)) if $diff;
-  }
-  $_[0]->zmq->write( $_[0]->alias, $from, ZMQ_SNDMORE );
-  $_[0]->zmq->write( $_[0]->alias, '', ZMQ_SNDMORE );
-  $_[0]->zmq->write( $_[0]->alias, $_[0]->current_tick );
+sub run {
+  DEBUG("Server run");
+  $poe_kernel->run;
 }
-
-sub start {
-  my ( $self ) = @_;
-  $self->zmq->start;
-  $self->zmq->create( $self->alias, ZMQ_ROUTER );
-  $self->zmq->set_zmq_sockopt( $self->alias, ZMQ_IDENTITY, 'SERVER' );
-  $self->_start_emitter;
-}
-
-sub stop {
-  my ( $self ) = @_;
-  $self->zmq->stop;
-  $self->_shutdown_emitter;
-}
-
-sub emitter_started {
-  my ( $self ) = @_;
-  $poe_kernel->call( $self->zmq->session_id, subscribe => 'all' );
-  $self->add_bind( $self->alias, $self->listen_on );
-  $poe_kernel->delay( tick => 1 );
-}
-
-sub tick {
-  my ( $self ) = @_;
-  TRACE("tick ".$self->current_tick) ;
-  $poe_kernel->delay( tick => $self->tickdelay );
-}
-
-sub run { $poe_kernel->run }
 
 1;

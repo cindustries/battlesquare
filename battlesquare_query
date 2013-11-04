@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+$|=1;
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+use FindBin;
+use lib $FindBin::Dir . "/lib"; 
+
+use POE;
+use BattleSquare::InfoRequest;
+use DDP;
+
+my $ip = "127.0.0.1";
+my $port = 12345;
+my $verbose = 0;
+
+GetOptions(
+	"ip|i=s" => \$ip,
+	"port|p=i" => \$port,
+	"verbose|v" => \$verbose
+) or die("Error in command line arguments");
+
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($verbose ? $DEBUG : $INFO);
+
+die "Require query" unless @ARGV;
+
+my $request = BattleSquare::InfoRequest->new(
+	ip => $ip,
+	port => $port ,
+	query => join(" ",@ARGV),
+	callback => sub {
+		if (ref $_[0] eq 'HASH') {
+			p(%{$_[0]});
+		} elsif (ref $_[0] eq 'ARRAY') {
+			p(@{$_[0]});
+		} else {
+			p($_[0]);
+		}
+	},
+)->start;
+
+$poe_kernel->run;
+
+exit 0;
