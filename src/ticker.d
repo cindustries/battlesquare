@@ -2,7 +2,7 @@
 module ticker;
 
 interface TickerApplication {
-    bool onTick();
+    bool onTick(ulong tick);
 }
 
     
@@ -10,6 +10,7 @@ interface TickerApplication {
 import deimos.ev;
 
 private TickerApplication tickerapp;
+private ulong tickNum = 0;
 void runTicker(TickerApplication app, double tickrate) {
     
     tickerapp = app;
@@ -27,7 +28,7 @@ void runTicker(TickerApplication app, double tickrate) {
 
 extern(C) private void tick_callback(ev_loop_t* loop, ev_timer* timer, int value) {        
     
-    auto result = tickerapp.onTick();        
+    auto result = tickerapp.onTick(++tickNum);        
     if(!result) ev_timer_stop(loop, timer);
     
 }

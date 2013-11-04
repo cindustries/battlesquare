@@ -1,41 +1,40 @@
 // Defines the possible messages
 module protocol;
 
-import std.uuid;
 public import std.uuid : UUID;
-import msgpack;
 
-enum MessageClassClient { // messages that the client sends
-    Hello,
-    ClientStateUpdate,
-    Goodbye
-}
-    
-enum MessageClassServer { // messages that the server sends
+enum MessageClassClient { // messages that the client recognises
     HelloReply,
     ServerStateUpdate
 }
 
-// Client to Server
-struct MHello { UUID clientId; }
-
-struct MClientStateUpdate {
-    ulong tick;
-    float x, y;
+enum MessageClassServer { // messages that the server recognises
+    Hello,
+    ClientStateUpdate,
+    Goodbye
 }
 
-struct MGoodbye { UUID clientId; }
 
-
-// Server to Client
+// Client's input messages
 struct MHelloReply { ulong tick; }
 
 struct MServerStateUpdate {
     struct Client {
-        float x, y;
+        float x, y, rot;
         int diff;
     }
     
     ulong tick;
     Client[] clients;
 }
+
+
+// Server's input messages
+struct MHello { UUID clientId; }
+
+struct MClientStateUpdate {
+    ulong tick;
+    float x, y, rot;
+}
+
+struct MGoodbye { UUID clientId; }

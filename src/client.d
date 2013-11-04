@@ -2,13 +2,28 @@
 module client;
 
 import zmq;
-import ticker;
+import clientevent;
 import protocol;
 import std.uuid;
+import std.conv : to;
+import std.stdio;
 
-enum string CONNECT_URL = "tcp://localhost:12345";
+// represents our knowledge of the other players
+struct Player {
+    float x, y, rot;
+}
 
-class Client : ClientEventPumper, TickerApplication {
+class Client {
+    
+    ClientEventManager event;
+    ClientMessenger message;
+    
+    public void run() {
+        event.register("onTick", &this.onTick);
+        event.register("gotHelloReply", &this.gotHelloReply);
+        event.register("gotServerStateUpdate", &this.gotServerStateUpdate);
+        event.run(0.01);
+    }
     
     enum State {
         Invalid,
@@ -19,6 +34,9 @@ class Client : ClientEventPumper, TickerApplication {
     }
     
     this() {
+        event = new ClientEventManager;
+        message = new ClientMessenger(event);
+        
         globalId = randomUUID(); // eventually this will be a PlayerID.net ID or something
         state = State.Initialised;
     }
@@ -26,16 +44,18 @@ class Client : ClientEventPumper, TickerApplication {
     UUID globalId;
     
     State state;
-    ulong tick;
+    ulong serverTick;   // updated when we get a tick-stamped state update
+    float x, y, rot;
     
-    bool onTick() {
-        tick++;
-        pumpEvents();
+    @event void onTick(ulong tick) {
+        writeln("Tick " ~ to!string(tick));
         
         if(state == State.Initialised) {
             //send a hello request
             MHello helloreq = { this.globalId };
-            this.send(helloreq);
+            message.sendToServer(helloreq);
+            
+            state = State.WaitingForHelloReply;
             
         } else if(state == State.WaitingForHelloReply) {
             // do we need to do something here?
@@ -47,87 +67,33 @@ class Client : ClientEventPumper, TickerApplication {
             
             state.x = 351;
             state.y = 359;
-            state.tick = this.tick;
-            this.send(state);
-            
+            state.tick = this.serverTick;
+            message.sendToServer(state);
             
         } else if(state == State.Exiting) {
             MGoodbye goodbye = { this.globalId };
-            this.send(goodbye);
+            message.sendToServer(goodbye);
             
         }
         
         
-        return (state != State.Exiting);
-    }
-    
-    override void onHelloReply(MHelloReply msg) {
-        
-    }
-    
-    override void onServerStateUpdate(MServerStateUpdate msg) {
-        this.tick = msg.tick;
-    }
-}
-
-
-abstract class ClientEventPumper {
-        
-    Context zmq;
-    Dealer socket;
-    
-    public this() {
-        zmq = new Context;
-        socket = zmq.createDealer();
-        socket.connect(CONNECT_URL);
-    }
-    
-    import std.traits : hasMember;
-    import std.string : chompPrefix;
-    protected void send(T)(T message) 
-    if (is(T == struct)) {        
-        MessageClassClient msgclass = mixin("MessageClassClient." ~ chompPrefix(T.stringof,"M"));
-        socket.sendMore(msgclass);
-        socket.send(message);
-    }
-    
-    protected void pumpEvents() {
-        
-        // check if we have any messages
-        while(socket.canPollIn) {
-            auto msgclass = socket.recv!MessageClassServer();
-            
-            final switch(msgclass) {
-                foreach(string mem; __traits(allMembers, MessageClassServer)) {
-                    assert(__traits(hasMember, ClientEventPumper, mem));
-                    mixin("case MessageClassServer." ~ mem ~ ": this.on" ~ mem ~ "(socket.recv!(M" ~ mem ~ ")()); break;");
-                }
-            }
+        if(state == State.Exiting) {
+            event.invoke("exit");
         }
     }
     
+    @event void gotHelloReply(MHelloReply msg) {
+        state = State.Normal;
+    }
     
-    // horray for macros
-    mixin(EventMethodGenerator!MessageClassServer);    
+    @event void gotServerStateUpdate(MServerStateUpdate msg) {
+        serverTick = msg.tick;
+    }
     
     public void destroy() {
-        socket.close();
-        zmq.destroy();
+        message.destroy();
+        event.destroy();        
     }
-    
-}
-
-private template EventMethodGenerator(alias mcenum) if(is(mcenum == enum)) {
-    
-    string genAllDefs(members...)() {
-        string all = "";
-        foreach(string mname; members) {
-            all = all ~ "abstract protected void on" ~ mname ~ "(M" ~ mname ~ " msg); ";
-        }
-        return all;
-    }
-    
-    enum string EventMethodGenerator = genAllDefs!(__traits(allMembers, mcenum))();
 }
 
 
@@ -135,5 +101,5 @@ void main() {
     auto client = new Client;
     scope(exit) client.destroy();
     
-    client.runTicker(0.01);
+    client.run();
 }
