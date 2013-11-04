@@ -58,20 +58,20 @@ sub build_defined_states {
   /], ],
 }
 
-sub zmqsock_connect_added { INFO("InfoClient connected to ".$_[ARG1]) }
-sub zmqsock_created { DEBUG("InfoClient created socket type ".$_[ARG1]) }
-sub zmqsock_closing { DEBUG("InfoClient closing") }
+sub zmqsock_connect_added { INFO("InfoRequest connected to ".$_[ARG1]) }
+sub zmqsock_created { DEBUG("InfoRequest created socket type ".$_[ARG1]) }
+sub zmqsock_closing { DEBUG("InfoRequest closing") }
 
 sub zmqsock_recv {
   my ( $self, $alias, $data ) = @_[OBJECT, ARG0 .. $#_];
-  DEBUG("InfoClient receive ".length($data));
+  DEBUG("InfoRequest receive ".length($data));
   $self->callback->($self->messagepack->unpack($data));
   $self->stop;
 }
 
 sub start {
   my ( $self ) = @_;
-  DEBUG("InfoClient start");
+  DEBUG("InfoRequest start");
   $self->zmq->start;
   $self->zmq->create( $self->alias, ZMQ_REQ );
   $self->_start_emitter;
@@ -79,14 +79,14 @@ sub start {
 
 sub stop {
   my ( $self ) = @_;
-  DEBUG("InfoClient stop");
+  DEBUG("InfoRequest stop");
   $self->zmq->stop;
   $self->_shutdown_emitter;
 }
 
 sub emitter_started {
   my ( $self ) = @_;
-  DEBUG("InfoClient emitter_started ".$self->ip." ".$self->port);
+  DEBUG("InfoRequest emitter_started ".$self->ip." ".$self->port);
   $poe_kernel->call( $self->zmq->session_id, subscribe => 'all' );
   $self->add_connect( $self->alias, $self->connect_to );
   $self->zmq->write( $self->alias, $self->query );

@@ -41,6 +41,14 @@ option maxplayers => (
   documentation => "Maximum players on the server (Default: 64)",
 );
 
+option adminpw => (
+  is => 'ro',
+  order => 6,
+  format => 's',
+  short => 'a',
+  documentation => "Admin password",
+);
+
 option debug => (
   is => 'ro',
   lazy => 1,

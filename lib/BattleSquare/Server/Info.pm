@@ -51,7 +51,6 @@ sub zmqsock_closing { DEBUG("Info [".$_[ARG0]."] closing") }
 
 sub zmqsock_recv {
   my ( $self, $alias, $data ) = @_[OBJECT, ARG0 .. $#_];
-  use DDP; p(@_);
   DEBUG("Info receive '".$data."'");
   my $return = 'unknown';
   my @args = split(/ +/,$data);
@@ -62,16 +61,28 @@ sub zmqsock_recv {
       seconds => floor( $current_tick * $self->server->tickrate ),
       maxplayers => $self->server->maxplayers,
       tickrate => $self->server->tickrate,
-      players => {
-        map { $_->username, ( $current_tick - $_->connected ) }
-        values %{$self->server->sessions}
-      },
+      players => [
+        map { $_->public_info }
+        sort { $a->kills <=> $b->kills || $b->deaths <=> $a->deaths }
+        @{$self->server->game->players}
+      ],
       gridsize => $self->server->gridsize,
     };
   } elsif (scalar @args == 2 and $args[0] eq 'login') {
     $return = $self->server->login($args[1]);
   } elsif (scalar @args == 2 and $args[0] eq 'logout') {
     $return = $self->server->logout($args[1]);
+  } elsif (scalar @args > 2 and $args[0] eq 'admin') {
+    if ($self->server->adminpw && $self->server->adminpw eq $args[1]) {
+      if (scalar @args == 3 and $args[2] eq 'sessions') {
+        $return = {
+          map { $_, $self->server->sessions->{$_}->username }
+          keys %{$self->server->sessions}
+        };
+      }
+    } else {
+      $return = 'failed';
+    }
   }
   $self->zmq->write( $_[0]->alias, $self->messagepack->pack($return) );
 }
