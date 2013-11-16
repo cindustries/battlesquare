@@ -1,9 +1,9 @@
 // Cuboid "ticker" network test (client)
 module battlesquare.client;
 
-import zmq;
-import clientevent;
-import protocol;
+import cuboid.zmq;
+import battlesquare.clientevent;
+import battlesquare.protocol;
 import std.uuid;
 import std.conv : to;
 import std.stdio;
@@ -67,10 +67,17 @@ class Client {
     }
 }
 
+version(unittest) {
+    void main() { writeln("All tests passed! Aparrantly..."); }
+} else {
+
 
 void main() {
+    
     auto client = new Client;
     scope(exit) client.destroy();
     
     client.run();
+}
+
 }

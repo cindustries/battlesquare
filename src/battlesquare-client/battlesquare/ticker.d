@@ -1,5 +1,5 @@
 // Generic event-based ticker template, kinda hackey, but that's interfacing with C...
-module ticker;
+module battlesquare.ticker;
 
 interface TickerApplication {
     bool onTick(ulong tick);

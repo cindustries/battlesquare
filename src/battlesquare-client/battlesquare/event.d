@@ -1,5 +1,5 @@
 // An event system
-module event;
+module battlesquare.event;
 
 import std.conv : to;
 import std.traits : ParameterTypeTuple;

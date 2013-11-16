@@ -1,9 +1,9 @@
 module battlesquare.clientevent;
 
-import event;
-import ticker;
-import zmq;
-import protocol;
+import battlesquare.event;
+import battlesquare.ticker;
+import cuboid.zmq;
+import battlesquare.protocol;
 
 enum string CONNECT_URL = "tcp://localhost:12345";
 
