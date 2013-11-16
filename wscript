@@ -1,70 +1,66 @@
+
+all_includes = [
+    'src/battlesquare-client',
+    'src/cuboid',
+    'src/deimos-ev',
+    'src/deimos-zmq',
+    'src/DerelictSDL2',
+    'src/DerelictUtil',
+    'src/msgpack'
+]
+
 def options(opt):
     opt.load('compiler_d')
   
   
 def configure(conf):
     conf.load('compiler_d')
-  
+
+
 def build(bld):
-
+    
     bld.stlib(
-        source=[
-            'import/derelict/util/exception.d',
-            'import/derelict/util/loader.d',
-            'import/derelict/util/sharedlib.d',
-            'import/derelict/util/system.d',
-            'import/derelict/util/wintypes.d',
-            'import/derelict/util/xtypes.d'
-        ],
-        includes=['./import'],
-        target='DerelictUtil'
-    )
-
-    bld.stlib(
-        source=[
-            'import/derelict/sdl2/functions.d',
-            'import/derelict/sdl2/image.d',
-            'import/derelict/sdl2/mixer.d',
-            'import/derelict/sdl2/net.d',
-            'import/derelict/sdl2/sdl.d',
-            'import/derelict/sdl2/ttf.d',
-            'import/derelict/sdl2/types.d'
-        ],
-        includes=['./import'],
-        target='DerelictSDL2',
-        use='DerelictUtil'
-    )
-
-
-    bld.stlib(
-        source='import/msgpack.d',
-        target='msgpackd'
+        source = bld.path.find_node('src/DerelictUtil').ant_glob('**/*.d'),
+        includes = all_includes,
+        target = 'DerelictUtil',
     )
     
     bld.stlib(
-        source=['src/zmq.d'],
-        target='zmqd',
-        use='msgpackd', includes=['./src','./import'], lib=['zmq'],
-        dflags=['-g']
+        source = bld.path.find_node('src/DerelictSDL2').ant_glob('**/*.d'),
+        includes = all_includes,
+        target = 'DerelictSDL2',
+        use = 'DerelictUtil',
+    )
+    
+    
+    bld.stlib(
+        source = 'src/msgpack/msgpack.d',
+        target = 'msgpackd',
     )
     
     bld.stlib(
-        source='/import/deimos/ev.d',
-        target='evd',
-        lib='ev'
+        source = 'src/deimos-ev/deimos/ev.d',
+        target = 'evd',
+        lib = 'ev',
     )
     
+    bld.stlib(
+        source = bld.path.find_node('src/cuboid').ant_glob('**/*.d'),
+        includes = all_includes,
+        
+        target = 'cuboid',
+        use = ['msgpackd'], 
+        lib = ['zmq'],
+        dflags = ['-g', '-unittest'],
+    )
+        
     bld.program(
-        source=[
-            'src/client.d',
-            'src/ticker.d',
-            'src/protocol.d',
-            'src/event.d',
-            'src/clientevent.d',
-            'src/weapon.d'
-        ],
-        target='client',
-        use=['evd', 'DerelictSDL2', 'zmqd', 'msgpackd'],
-        includes=['./src','./import'], lib=['zmq', 'ev'],
-        dflags=['-g']
+        
+        source = bld.path.find_node('src/battlesquare-client').ant_glob('**/*.d'),
+        
+        target = 'battlesquare-client',
+        use = ['cuboid', 'DerelictSDL2', 'zmqd', 'msgpackd', 'evd'],
+        includes = all_includes,
+        lib = ['zmq', 'ev'],
+        dflags = ['-g', '-unittest'],
     )
