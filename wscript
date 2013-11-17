@@ -6,7 +6,8 @@ all_includes = [
     'src/deimos-zmq',
     'src/DerelictSDL2',
     'src/DerelictUtil',
-    'src/msgpack'
+    'src/msgpack',
+    'src/dyaml',
 ]
 
 def options(opt):
@@ -45,11 +46,17 @@ def build(bld):
     )
     
     bld.stlib(
+        source = bld.path.find_node('src/dyaml').ant_glob('**/*.d'),
+        includes = all_includes,
+        target = 'dyaml',
+    )
+    
+    bld.stlib(
         source = bld.path.find_node('src/cuboid').ant_glob('**/*.d'),
         includes = all_includes,
         
         target = 'cuboid',
-        use = ['msgpackd'], 
+        use = ['msgpackd', 'dyaml'], 
         lib = ['zmq'],
         dflags = ['-g', '-unittest'],
     )
