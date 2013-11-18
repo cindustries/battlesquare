@@ -56,7 +56,7 @@ def build(bld):
         includes = all_includes,
         
         target = 'cuboid',
-        use = ['msgpackd', 'dyaml'], 
+        use = ['msgpackd', 'dyaml', 'sqlite3'], 
         lib = ['zmq'],
         dflags = ['-g', '-unittest'],
     )
