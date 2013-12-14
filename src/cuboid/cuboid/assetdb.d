@@ -39,13 +39,31 @@ class Database {
         
         private sqlite_stmt* statement;
         private this() {}
+        private bool canAccessColumn;
         
+        // Usage:
+        // do { use Statement } while (stmt.step())
         public bool step() {
             return ( sqlite3_step(this.statement) == SQLITE_ROW );
         }
         
-        public T column(T)(int col) if(is(T == int)) {
-            
+        // Column info retrieval methods
+        public int columnCount() { return sqlite3_column_count(statement); }
+        public string columnName(int col) { return to!string( sqlite_column_name(statement, col) ); }
+        
+        // Column data retrieval methods
+        public void[] getBlob(int col) {
+            void* datap = sqlite3_column_blob(statement, col);
+            int datalen = sqlite3_column_bytes(statement, col);
+            return cast(void[]) datap[0 .. datalen].dup;
+        }
+        public double getDouble(int col) { return sqlite3_column_double(statement, col); }
+        public int  getInt(int col) { return sqlite3_column_int(statement, col); }
+        public long getInt64(int col) { return sqlite3_column_int64(statement, col); }
+        public char[] getText(int col) {
+            char* datap = sqlite3_column_text(statement, col);
+            int datalen = sqlite3_column_bytes(statement, col);
+            return cast(char[]) datap[0 .. datalen].dup;
         }
         
         public int columnCount() {

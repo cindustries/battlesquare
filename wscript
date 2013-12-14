@@ -24,6 +24,7 @@ def build(bld):
         source = bld.path.find_node('src/DerelictUtil').ant_glob('**/*.d'),
         includes = all_includes,
         target = 'DerelictUtil',
+        lib = 'dl',
     )
     
     bld.stlib(
@@ -51,23 +52,23 @@ def build(bld):
         target = 'dyaml',
     )
     
-    bld.stlib(
-        source = bld.path.find_node('src/cuboid').ant_glob('**/*.d'),
-        includes = all_includes,
+    #bld.stlib(
+        #source = bld.path.find_node('src/cuboid').ant_glob('**/*.d'),
+        #includes = all_includes,
         
-        target = 'cuboid',
-        use = ['msgpackd', 'dyaml', 'sqlite3'], 
-        lib = ['zmq'],
-        dflags = ['-g', '-unittest'],
-    )
+        #target = 'cuboid',
+        #use = ['msgpackd', 'dyaml', 'sqlite3'], 
+        #lib = ['zmq'],
+        #dflags = ['-g', '-unittest'],
+    #)
         
     bld.program(
         
         source = bld.path.find_node('src/battlesquare-client').ant_glob('**/*.d'),
         
         target = 'battlesquare-client',
-        use = ['cuboid', 'DerelictSDL2', 'zmqd', 'msgpackd', 'evd'],
+        use = ['DerelictSDL2', 'zmqd', 'msgpackd', 'evd'],
         includes = all_includes,
-        lib = ['zmq', 'ev'],
+        lib = ['zmq', 'ev', 'dl'],
         dflags = ['-g', '-unittest'],
     )
