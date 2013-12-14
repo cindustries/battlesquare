@@ -7,6 +7,7 @@ import std.conv;
 import std.string;
 import battlesquare.sdl;
 import battlesquare.sprite;
+import battlesquare.map;
 
 // some constants for config
 immutable string SCREEN_TITLE = "BattleSquare";
@@ -31,10 +32,13 @@ class Game {
             0, 5
         );
         
-        auto sprite0 = spritesheet.getSprite(dispid);
+        auto map = new TileGridMap(sdlRenderer, 16, 50, 40);
+        map.setTile(0, 0,
+            TileGridMap.Tile(spritesheet.getSprite(dispid))
+        );
         
         SDL_RenderClear(sdlRenderer);
-        sprite0.render( SDL_Rect(0, 0, 32, 32) );
+        map.render();
         SDL_RenderPresent(sdlRenderer);
         
         SDL_Delay(1000);
