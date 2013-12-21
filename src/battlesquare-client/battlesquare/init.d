@@ -6,6 +6,10 @@ import std.conv;
 import battlesquare.sdl;
 import battlesquare.game;
 
+// some constants for config
+immutable string SCREEN_TITLE = "BattleSquare";
+immutable int SCREEN_WIDTH = 800;   // 50x40 16px tiles
+immutable int SCREEN_HEIGHT = 640;
 
 void main(string[] args) {
     
@@ -44,8 +48,13 @@ void main(string[] args) {
     scope(exit) SDL_DestroyRenderer(sdlRenderer);
     
     // now we have a working renderer!
-    auto game = new Game(sdlRenderer);
-    game.run(args[1].to!uint);
+    auto game = new Game();
+    
+    for(;;) {
+        game.update();
+        game.render(sdlRenderer);
+        SDL_Delay(1000/60);
+    }
        
     
 }

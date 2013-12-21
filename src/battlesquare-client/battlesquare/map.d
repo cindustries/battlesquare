@@ -2,6 +2,8 @@ module battlesquare.map;
 
 import battlesquare.sprite;
 
+/+ nay
+
 interface Map {
     public void render();
 }
@@ -47,3 +49,28 @@ public:
     }
     
 }
+
+byte[] packMap(TileGridMap map) {
+    
+    import msgpack;
+    import std.array;
+    auto packer = packer( appender!(ubyte[])() );
+    
+    packer.beginArray(4);
+    packer.pack(map.tilepx);
+    packer.pack(map.numx);
+    packer.pack(map.numy);
+    packer.beginArray(map.tiles.length);
+    
+    foreach(Tile tile; map.tiles) {
+        packer.packArray(tile.sprite.spriteId);
+    }
+    
+    return packer.stream().data;
+}
+
+Map unpackMap(byte[]) {
+    
+}
+
++/

@@ -70,5 +70,5 @@ def build(bld):
         use = ['DerelictSDL2', 'zmqd', 'msgpackd', 'evd'],
         includes = all_includes,
         lib = ['zmq', 'ev', 'dl'],
-        dflags = ['-g', '-unittest'],
+        dflags = ['-g', '-debug', '-gs', '-unittest'],
     )

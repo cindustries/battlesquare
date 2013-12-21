@@ -5,6 +5,8 @@ import std.exception : enforce;
 import std.conv : to;
 public import battlesquare.sdl;
 
+/+ All wrong
+
 class SpriteSheet {
     private uint numSpriteCols, numSpriteRows;
     private uint spriteWidth, spriteHeight;
@@ -58,13 +60,19 @@ class SpriteSheet {
 class Sprite {
     private SpriteSheet sheet;
     private SDL_Rect area;
+    private uint id;
     
-    private this(SpriteSheet sheet, SDL_Rect area) {
+    private this(SpriteSheet sheet, SDL_Rect area, uint id) {
         this.sheet = sheet;
         this.area = area;
+        this.id = id;
     }
+    
+    public uint spriteId() { return this.id; }
     
     public void render(SDL_Rect whereto) {
         enforceSdl( SDL_RenderCopy(sheet.renderer, sheet.texture, &area, &whereto), "Could not render sprite!");
     }
 }
+
++/
