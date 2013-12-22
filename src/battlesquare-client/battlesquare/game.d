@@ -58,11 +58,54 @@ class Bullet {
 }
 
 
+class Button {
+    private void delegate() callback;
+    public SDL_Rect rect;
+    public string text;
+    private bool _isBeingPressed;
+    public @property bool isBeingPressed() { return _isBeingPressed; }
+    
+    public void press() {
+        if(this.isBeingPressed == false) { // you can't press a button when it's pressed, silly!
+            this._isBeingPressed = true;
+            this.callback();
+        }
+    }
+    
+    public void release() {
+        this._isBeingPressed = false;
+    }
+    
+    public this(string text, SDL_Rect where, void delegate() callback) {
+        this.text = text;
+        this.rect = where;
+        this.callback = callback;        
+    }
+}
+
+// shameless global locationless utility
+bool containsPoint(SDL_Rect rect, Vec vec) {
+    return (
+        vec.x > rect.x &&
+        vec.x < rect.x + rect.w &&
+        vec.y > rect.y &&
+        vec.y < rect.y + rect.h
+    );
+}
+
+Vec getMousePosition() {
+    int mousex, mousey;
+    SDL_GetMouseState( &mousex, &mousey );
+    return Vec(mousex.to!float, mousey.to!float);
+}
+
 class Game {
     
     private Player player1;
     private Bullet[] bullets;
     private uint lastShootTime;
+    
+    private Button[] buttons;
     
     private bool[SDL_Keycode] isKeyDown;
     private bool isMouseDown;
@@ -116,11 +159,19 @@ class Game {
             }
         }
         
-        // check if we are shooting (or atleast, attempting to)
-        if(isMouseDown == true) {
-            int mousex, mousey;
-            SDL_GetMouseState( &mousex, &mousey );
-            tryShoot( player1.pos, Vec(mousex.to!float, mousey.to!float) - player1.pos );
+        // check if we are pressing buttons
+        foreach(button; buttons) {
+            if(button.isBeingPressed && isMouseDown == false) {
+                button.release();
+            }
+            else if(!button.isBeingPressed && isMouseDown == true && button.rect.containsPoint( getMousePosition() )) {
+                button.press();
+            }
+        }
+        
+        // shoot stuff
+        if(isMouseDown == true) {            
+            tryShoot( player1.pos, getMousePosition() - player1.pos );
         }
         
         // update the bullets' positions
