@@ -5,11 +5,12 @@ import std.string;
 import std.conv;
 import battlesquare.sdl;
 import battlesquare.game;
+import battlesquare.basicgame;
 
 // some constants for config
-immutable string SCREEN_TITLE = "BattleSquare";
-immutable int SCREEN_WIDTH = 800;   // 50x40 16px tiles
-immutable int SCREEN_HEIGHT = 640;
+public immutable string SCREEN_TITLE = "BattleSquare";
+public immutable int SCREEN_WIDTH = 800;   // 50x40 16px tiles
+public immutable int SCREEN_HEIGHT = 640;
 
 void main(string[] args) {
     
@@ -30,6 +31,7 @@ void main(string[] args) {
     
     // create window & renderer
     SDL_Window* sdlWindow = null;
+    SDL_Surface* sdlWindowSurface = null;
     SDL_Renderer* sdlRenderer = null;
     
     sdlWindow = SDL_CreateWindow(
@@ -38,23 +40,45 @@ void main(string[] args) {
             SDL_WINDOWPOS_UNDEFINED,
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
-            0
+            SDL_WINDOW_BORDERLESS
     );
     enforceSdl(sdlWindow != null, "Could not create SDL window!");
     scope(exit) SDL_DestroyWindow(sdlWindow);
     
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_ACCELERATED);
+    sdlWindowSurface = SDL_GetWindowSurface(sdlWindow);
+    enforceSdl(sdlWindowSurface != null, "Could not get window surface!");
+    
+        sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_TARGETTEXTURE);
     enforceSdl(sdlRenderer != null, "Could not create SDL renderer!");
     scope(exit) SDL_DestroyRenderer(sdlRenderer);
     
     // now we have a working renderer!
-    auto game = new Game();
-    
-    for(;;) {
-        game.update();
-        game.render(sdlRenderer);
-        SDL_Delay(1000/60);
+    debug {
+        try {
+            auto game = to!Game( new BasicGame() );
+            runGame(game, sdlRenderer);            
+        } catch(Exception ex) {
+            SDL_ShowSimpleMessageBox(
+                SDL_MESSAGEBOX_ERROR,
+                "Exception",
+                toStringz(to!string(ex)),
+                sdlWindow
+            );
+            throw ex;
+        }
+        
+    } else {
+        auto game = to!Game( new BasicGame() );
+        runGame(game, sdlRenderer);
     }
        
     
+}
+
+void runGame(Game game, SDL_Renderer* renderer) {
+    for(;;) {
+        game.update(0); // lol
+        game.render(renderer);
+        SDL_Delay(1000/60);
+    }
 }

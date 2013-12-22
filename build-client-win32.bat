@@ -3,6 +3,8 @@ dmd -odbuild -ofbuild/battlesquare-client -debug -g -unittest ^
  src/battlesquare-client/battlesquare/init.d ^
  src/battlesquare-client/battlesquare/game.d ^
  src/battlesquare-client/battlesquare/sdl.d ^
+ src/battlesquare-client/battlesquare/vec.d ^
+ src/battlesquare-client/battlesquare/basicgame.d ^
  src/DerelictUtil/derelict/util/exception.d ^
  src/DerelictUtil/derelict/util/loader.d ^
  src/DerelictUtil/derelict/util/sharedlib.d ^
