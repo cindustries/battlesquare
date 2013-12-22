@@ -107,43 +107,41 @@ final class BasicGame : Game {
         player1.applyMove();
     }
     
-    public void render(SDL_Renderer* rdr) {
+    public void render(Renderer rdr) {
         
         // trickery to draw a circle - draw to seperate texture, then copy circle
-        SDL_Texture* windowTexture = SDL_GetRenderTarget(rdr);
-        SDL_Texture* drawTexture = SDL_CreateTexture(rdr, SDL_PIXELFORMAT_UNKNOWN,
-                                                     SDL_TEXTUREACCESS_TARGET,
-                                                     SCREEN_WIDTH, SCREEN_HEIGHT);
-        scope(exit) SDL_DestroyTexture(drawTexture);
-        enforceSdl( SDL_SetRenderTarget(rdr, drawTexture), "Failed set draw target");
+        Texture windowTexture = rdr.getRenderTarget();
+        scope Texture drawTexture = rdr.createTexture(
+            SDL_PIXELFORMAT_UNKNOWN, SDL_TEXTUREACCESS_TARGET,
+            SCREEN_WIDTH, SCREEN_HEIGHT
+        );
+        // scope(exit) destroy(drawTexture)
         
-        enforceSdl( SDL_SetRenderDrawColor(rdr, 24, 24, 24, 255), "set colour" );
-        enforceSdl( SDL_RenderClear(rdr), "render clear" );
+        rdr.setRenderTarget(drawTexture);
+        
+        rdr.setDrawColour(24, 24, 24, 255);
+        rdr.clear();
         
         // render bullets
-        enforceSdl( SDL_SetRenderDrawColor(rdr, 255, 255, 255, 255), "set colour" );
+        rdr.setDrawColour(255, 255, 255, 255);
         foreach(bullet; this.bullets) {
-            enforceSdl( SDL_RenderDrawPoint(rdr, bullet.pos.x.to!int, bullet.pos.y.to!int), "draw point (bullet)" );
+            rdr.drawPoint(Vec(bullet.pos.xi, bullet.pos.yi));
         }
         
         // render player1
         enum int PLAYER_SIZE = 24; enum int PLAYER_SIZE_HALF = PLAYER_SIZE/2;
-        auto rect = SDL_Rect(
-            cast(int)(player1.pos.x) - PLAYER_SIZE_HALF,
-            cast(int)(player1.pos.y) - PLAYER_SIZE_HALF,
-            PLAYER_SIZE,
-            PLAYER_SIZE
+        auto playerRect = Rect(
+            Vec( player1.pos.xi - PLAYER_SIZE/2, player1.pos.yi - PLAYER_SIZE/2, ),
+            Vec( PLAYER_SIZE, PLAYER_SIZE )
         );
         
-        enforceSdl( SDL_SetRenderDrawColor(rdr, 0, 255, 0, 255), "set colour" );
-        enforceSdl( SDL_RenderFillRect(rdr, &rect), "draw rect" );
+        rdr.setDrawColour(0, 255, 0, 255);
+        rdr.fillRect( playerRect );
         
         // copy circular area to window
-        enforceSdl( SDL_SetRenderTarget(rdr, windowTexture), "set render target" );
-        //enforceSdl( SDL_SetTextureBlendMode(windowTexture, SDL_BLENDMODE_BLEND), "set texture blend mode" );
-        enforceSdl( SDL_SetRenderDrawBlendMode(rdr, SDL_BLENDMODE_BLEND), "set render blend mode" );
-        enforceSdl( SDL_SetRenderDrawColor(rdr, 0, 0, 0, 0), "set colour" );
-        enforceSdl( SDL_RenderClear(rdr), "clear window texture" );
+        rdr.setRenderTarget(windowTexture);
+        rdr.setDrawColour(0, 0, 0, 0);
+        rdr.clear();
         
         foreach(int i; 0 .. SCREEN_HEIGHT/2) {
             // H^2 = X^2 + Y^2
@@ -154,12 +152,11 @@ final class BasicGame : Game {
             immutable real h = to!real( SCREEN_HEIGHT/2 );
             immutable real x = sqrt( h*h - y*y );
             
-            SDL_Rect row;
-            row.x = (SCREEN_WIDTH/2) - to!int(x);
-            row.y = i;
-            row.w = to!int( 2.0 * x );
-            row.h = 1;
-            enforceSdl( SDL_RenderCopy(rdr, drawTexture, &row, &row), "copy row" );
+            auto row = Rect(
+                Vec( (SCREEN_WIDTH/2) - to!int(x), i ),
+                Vec( to!int( 2.0 * x ), 1 )
+            );
+            rdr.copyRect(drawTexture, row, row);
         }
         
         foreach(int i; SCREEN_HEIGHT/2 .. SCREEN_HEIGHT) {
@@ -168,14 +165,13 @@ final class BasicGame : Game {
             immutable real h = to!real( SCREEN_HEIGHT/2 );
             immutable real x = sqrt( h*h - y*y );
             
-            SDL_Rect row;
-            row.x = (SCREEN_WIDTH)/2 - to!int(x);
-            row.y = i;
-            row.w = to!int( 2.0 * x );
-            row.h = 1;
-            enforceSdl( SDL_RenderCopy(rdr, drawTexture, &row, &row), "copy row" );
+            auto row = Rect(
+                Vec( (SCREEN_WIDTH)/2 - to!int(x), i ),
+                Vec( to!int( 2.0 * x ), 1 )
+            );
+            rdr.copyRect(drawTexture, row, row);
         }
                
-        SDL_RenderPresent(rdr);
+        rdr.present();
     }
 }

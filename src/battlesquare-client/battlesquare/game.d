@@ -15,7 +15,7 @@ void trace(T...)(T args) {
 }
 
 interface Game {
-    void render(SDL_Renderer* renderer);
+    void render(Renderer renderer);
     void update(real delta); // delta - difference in time, in ms, since last call
 }
 

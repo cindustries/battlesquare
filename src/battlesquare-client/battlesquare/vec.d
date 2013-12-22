@@ -8,6 +8,8 @@ struct Vec {
     private float _x = 0, _y = 0;
     public @property float x() { return _x; }
     public @property float y() { return _y; }
+    public @property int xi() { return x.to!int; }
+    public @property int yi() { return y.to!int; }
     
     static public immutable Vec zero = immutable(Vec)(0.0f, 0.0f);
     
@@ -31,4 +33,11 @@ struct Vec {
     @property Vec normalised() { return Vec( x/this.magnitude, y/this.magnitude ); }
     
     string toString() { return "(" ~ x.to!string ~ ", " ~ y.to!string ~ ")"; }
+}
+
+struct Rect {
+    private Vec _pos, _size;
+    
+    public @property Vec pos() { return _pos; }
+    public @property Vec size() { return _size; }
 }

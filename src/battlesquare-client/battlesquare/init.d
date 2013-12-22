@@ -48,15 +48,16 @@ void main(string[] args) {
     sdlWindowSurface = SDL_GetWindowSurface(sdlWindow);
     enforceSdl(sdlWindowSurface != null, "Could not get window surface!");
     
-        sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_TARGETTEXTURE);
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_TARGETTEXTURE);
     enforceSdl(sdlRenderer != null, "Could not create SDL renderer!");
     scope(exit) SDL_DestroyRenderer(sdlRenderer);
     
+    Renderer renderer = new Renderer(sdlRenderer);
     // now we have a working renderer!
     debug {
         try {
             auto game = to!Game( new BasicGame() );
-            runGame(game, sdlRenderer);            
+            runGame(game, renderer);            
         } catch(Exception ex) {
             SDL_ShowSimpleMessageBox(
                 SDL_MESSAGEBOX_ERROR,
@@ -75,7 +76,7 @@ void main(string[] args) {
     
 }
 
-void runGame(Game game, SDL_Renderer* renderer) {
+void runGame(Game game, Renderer renderer) {
     for(;;) {
         game.update(0); // lol
         game.render(renderer);
