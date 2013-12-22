@@ -19,7 +19,7 @@ void main(string[] args) {
     DerelictSDL2.load();
     scope(exit) DerelictSDL2.unload();
     DerelictSDL2Image.load();
-    scope(exit) DerelictSDL2Image.load();
+    scope(exit) DerelictSDL2Image.unload();
     
     // init sdl
     enforceSdl(SDL_Init(0), "Could not initialise SDL!");
