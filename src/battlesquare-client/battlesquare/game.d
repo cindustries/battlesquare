@@ -10,6 +10,10 @@ import battlesquare.sdl;
 import battlesquare.sprite;
 import battlesquare.map;
 
+void trace(T...)(T args) {
+    debug { writeln(args); } // whole thing should be optimised away
+}
+
 struct Vec {
     private float _x = 0, _y = 0;
     public @property float x() { return _x; }
@@ -37,6 +41,7 @@ class Player {
     
     void applyMove() {
         if(dpos != Vec.zero) {
+            debug trace("Updating ", pos, " with ", dpos); // YAY no more NaNs
             pos = pos + dpos;
             dpos = Vec.zero;
         }
@@ -71,6 +76,8 @@ class Game {
             bullets ~= bullet;
             
             lastShootTime = SDL_GetTicks();
+            
+            debug trace("Spawned bullet ", bullets.length);
         }
     }
     
@@ -104,7 +111,7 @@ class Game {
                     break;
                     
                 default:
-                    //debug writeln("Unhandled event", event.type);
+                    debug trace("Unhandled event", event.type);
                     break;
             }
         }
