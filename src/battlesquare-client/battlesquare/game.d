@@ -7,8 +7,6 @@ import std.conv;
 import std.string;
 import std.math;
 import battlesquare.sdl;
-import battlesquare.sprite;
-import battlesquare.map;
 
 void trace(T...)(T args) {
     debug { writeln(args); } // whole thing should be optimised away
