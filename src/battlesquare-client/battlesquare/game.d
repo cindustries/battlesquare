@@ -19,33 +19,6 @@ interface Game {
     void update(real delta); // delta - difference in time, in ms, since last call
 }
 
-class Player {
-    string name = "Player";
-    Vec pos, dpos;
-    
-    void addMove(float x, float y) {
-        dpos = dpos + Vec(x, y);
-    }
-    
-    void applyMove() {
-        if(dpos != Vec.zero) {
-            debug trace("Updating ", pos, " with ", dpos); // YAY no more NaNs
-            pos = pos + dpos;
-            dpos = Vec.zero;
-        }
-    }
-}
-
-class Bullet {
-    Vec pos;
-    Vec dpos;
-    
-    void applyMove() {
-        pos = pos + dpos;
-    }
-}
-
-
 class Button {
     private void delegate() callback;
     public SDL_Rect rect;

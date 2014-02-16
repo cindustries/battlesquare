@@ -4,8 +4,42 @@ import battlesquare.sdl;
 import battlesquare.game;
 import battlesquare.vec;
 import battlesquare.init;
-
 import std.math : sqrt;
+
+class Player {
+    string name = "Player";
+    Vec pos, dpos;
+    
+    void addMove(float x, float y) {
+        dpos = dpos + Vec(x, y);
+    }
+    
+    void applyMove() {
+        if(dpos != Vec.zero) {
+            debug trace("Updating ", pos, " with ", dpos); // YAY no more NaNs
+            pos = pos + dpos;
+            dpos = Vec.zero;
+        }
+    }
+}
+
+class Bullet {
+    Vec pos;
+    Vec dpos;
+    
+    void applyMove() {
+        pos = pos + dpos;
+    }
+}
+
+class Weapon {
+    
+    void tryShoot(Game game, Player player) {
+        
+    }
+    
+}
+
 
 // this should probably be made a fair bit nicer
 final class BasicGame : Game {
